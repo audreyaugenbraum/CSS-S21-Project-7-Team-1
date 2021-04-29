@@ -107,13 +107,56 @@ Do the following:
 - Assess the parallel trends assumption for your choices using a plot. If you are not satisfied that the assumption has been met, pick another state and try again (but detail the states you tried).
 
 ```{r}
+# I'm choosing KY and AL
 # Parallel Trends plot
+medicaid_expansion %>%
+  filter(State %in% c("Kentucky","Alabama")) %>%
+  filter(year >= 2007 & year <= 2021) %>%
+  ggplot() + 
+  geom_point(aes(x = year, 
+                 y = uninsured_rate, 
+                 color = State)) +
+  geom_line(aes(x = year, 
+                 y = uninsured_rate, 
+                 color = State)) +
+  geom_vline(xintercept = 2014) +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text()) +
+  ggtitle('Kentucky and Alabama Uninsured Rate \n before/after Medicaid expansion') +
+  xlab('Year') +
+  ylab('Uninsured rate')
+# how do the pre-trends look?
 ```
 
 - Estimates a difference-in-differences estimate of the effect of the Medicaid expansion on the uninsured share of the population. You may follow the lab example where we estimate the differences in one pre-treatment and one post-treatment period, or take an average of the pre-treatment and post-treatment outcomes
 
 ```{r}
 # Difference-in-Differences estimation
+# am I estimating this correctly with year?
+# kentucky-alabama
+ka <- medicaid_expansion %>%
+  filter(State %in% c("Kentucky","Alabama")) %>%
+  filter(year >= 2008 & year <= 2020) 
+# pre-treatment difference
+pre_diff <- ka %>%
+  filter(year == 2008) %>%
+  select(State,
+         uninsured_rate) %>% 
+  spread(State,
+         uninsured_rate) %>%
+  summarise(Alabama - Kentucky)
+  
+# post-treatment difference
+post_diff <- ka %>%
+  filter(year == 2020) %>%
+  select(State, 
+         uninsured_rate) %>%
+  spread(State, 
+         uninsured_rate) %>%
+  summarise(Alabama - Kentucky)
+# diff-in-diffs
+diff_in_diffs <- post_diff - pre_diff
+diff_in_diffs
 ```
 
 
@@ -123,7 +166,7 @@ Do the following:
 - **Answer**:
 
 - What are the strengths and weaknesses of using the parallel trends assumption in difference-in-differences estimates?
-- **Answer**:
+- **Answer**: A strength of the parallel trends assumption is that it is intuitive and can be easily visualized. A weakness of the assumption is that it essentially must be eyeballed graphically, and there is no statistic that allows us to determine how much better one comparison unit is than another. Further, the granularity of the measurement of the outcome of interest may matter -- if the uninsured rate is only measured yearly, we may be unaware of changes taking place in, say, the six months prior to the treatment date.
 
 
 # Synthetic Control
@@ -136,20 +179,80 @@ Do the following:
 
 - Choose a state that adopted the Medicaid expansion after January 1, 2014. Construct a non-augmented synthetic control and plot the results (both pre-treatment fit and post-treatment differences). Also report the average ATT and L2 imbalance.
 
+
 ```{r}
 # non-augmented synthetic control
+
+#Nebraska (2020-10-01)
+# augsynth(outcome ~ trt, unit, time, t_int, data)
+
+NE <-  medicaid_expansion %>% 
+  mutate(treated = as.numeric(State == "Nebraska" & year >= 2017))
+
+syn <- augsynth(uninsured_rate ~ treated, State, year, 
+               NE,
+                progfunc = "None", scm = T)
+
+synsum <- summary(syn)
+
+synsum$average_att
+synsum$l2_imbalance
+
 ```
 
-- Re-run the same analysis but this time use an augmentation (default choices are Ridge, Matrix Completion, and GSynth). Create the same plot and report the average ATT and L2 imbalance.
+
+```{r}
+
+plot(syn)
+
+```
 
 ```{r}
 # augmented synthetic control
-```
 
-- Plot barplots to visualize the weights of the donors.
+rsyn <- augsynth(uninsured_rate ~ treated, State, year, 
+               NE,
+                progfunc = "Ridge", scm = T)
+
+rsynsum <- summary(rsyn)
+rsynsum$average_att
+rsynsum$l2_imbalance
+
+plot(rsyn)
+
+```
 
 ```{r}
 # barplots of weights
+
+data.frame(syn$weights) %>%
+  # change index to a column
+  tibble::rownames_to_column('State') %>%
+  ggplot() +
+  # stat = identity to take the literal value instead of a count for geom_bar()
+  geom_bar(aes(x = State, 
+               y = syn.weights),
+           stat = 'identity') +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text(),
+        axis.text.x = element_text(angle = 90)) +
+  ggtitle('Synthetic Control Weights') +
+  xlab('State') +
+  ylab('Weight') 
+
+
+data.frame(rsyn$weights) %>%
+  tibble::rownames_to_column('State') %>%
+  ggplot() +
+  geom_bar(aes(x = State, y = rsyn.weights),
+           stat = 'identity') +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text(),
+        axis.text.x = element_text(angle = 90)) +
+  ggtitle('Synthetic Control Weights') +
+  xlab('State') +
+  ylab('Weight') 
+
 ```
 
 **HINT**: Is there any preprocessing you need to do before you allow the program to automatically find weights for donor states?
