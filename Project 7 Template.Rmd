@@ -5,7 +5,7 @@ output: html_document
 
 
 ```{r}
-# Install and load packages 
+#Install and load packages 
 if (!require("pacman")) install.packages("pacman")
 
 devtools::install_github("ebenmichael/augsynth")
@@ -138,14 +138,80 @@ Do the following:
 - Estimate a multisynth model that treats each state individually. Choose a fraction of states that you can fit on a plot and examine their treatment effects.
 
 ```{r}
-# multisynth model states
+#Adding Year Column to dataframe
+medicaid_expansion$year_adopted <-format(medicaid_expansion$Date_Adopted, "%Y")
+
+# Selection of Twelve States that passes medicaid expansion
+`%notin%`=Negate(`%in%`)
+selected_states <- medicaid_expansion %>%
+subset(year=='2020' & !is.na(year_adopted) & State %notin% 'Distrcit of Columbia') %>% 
+select(State)
+
+selected_states <-sample_n(selected_states, 12)
+selected_states <- dplyr::pull(selected_states, State)
+
+#Treatment Indicator
+medicaid_expansion_final <- medicaid_expansion %>%
+  filter(State %in% selected_states | is.na (Date_Adopted)) %>%
+ mutate (treat =ifelse(year <year_adopted,0,1),
+         treat = ifelse(is.na(year_adopted),0, treat)) %>% 
+   arrange(State)
+
+# with default nu
+ppool_syn <- multisynth(uninsured_rate ~ treat, State, year, 
+                        medicaid_expansion_final, n_leads = 6)
+
+print(ppool_syn$nu)
+
+ppool_syn
+```
+```{r}
+ppool_syn_summ <- summary(ppool_syn)
 ```
 
+
+```{r}
+ppool_syn_summ$att %>%
+  ggplot(aes(x = Time, y = Estimate, color = Level)) +
+  geom_point() +
+  geom_line() +
+  geom_vline(xintercept = 0) +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text(),
+        legend.position = 'None') +
+  ggtitle('Synthetic Controls for State Medicaid Expansion') +
+  xlab('Time') +
+  ylab('Uninsured Rate') +
+  facet_wrap(~Level)
+```
 - Estimate a multisynth model using time cohorts. For the purpose of this exercise, you can simplify the treatment time so that states that adopted Medicaid expansion within the same year (i.e. all states that adopted epxansion in 2016) count for the same cohort. Plot the treatment effects for these time cohorts.
 
 ```{r}
 # multisynth model time cohorts
+
+ppool_syn_time <- multisynth(uninsured_rate ~ treat, State, year,
+                        medicaid_expansion_final, n_leads = 6, time_cohort = TRUE)
+
+ppool_syn_time_summ <- summary(ppool_syn_time)
+
+ppool_syn_time_summ
 ```
+
+```{r}
+ppool_syn_time_summ$att %>%
+  ggplot(aes(x = Time, y = Estimate, color = Level)) +
+  geom_point() +
+  geom_line() +
+  geom_vline(xintercept = 0) +
+  theme_fivethirtyeight() +
+  theme(axis.title = element_text(),
+        legend.position = 'None') +
+  ggtitle('Synthetic Controls for State Medicaid Expansion By Year') +
+  xlab('Time') +
+  ylab('Uninsured Rate') +
+  facet_wrap(~Level)
+```
+
 
 ## Discussion Questions
 
