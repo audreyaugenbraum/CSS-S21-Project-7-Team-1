@@ -174,7 +174,7 @@ diff_in_diffs
 ## Discussion Questions
 
 - Card/Krueger's original piece utilized the fact that towns on either side of the Delaware river are likely to be quite similar to one another in terms of demographics, economics, etc. Why is that intuition harder to replicate with this data?
-- **Answer**:
+- **Answer**: Since our unit of analysis is not towns, but states, it is more difficult to leverage Card and Krueger's intuition. This is because states are aggregate units; they contain/border a range of geographic features and exhibit a range of demographic and economic characteristics. Another way of saying this is that we cannot necessarily expect that individuals living within a given state face more similar economic and political conditions to each other than with those living outside of that state.
 
 - What are the strengths and weaknesses of using the parallel trends assumption in difference-in-differences estimates?
 - **Answer**: A strength of the parallel trends assumption is that it is intuitive and can be easily visualized. A weakness of the assumption is that it essentially must be eyeballed graphically, and there is no statistic that allows us to determine how much better one comparison unit is than another. Further, the granularity of the measurement of the outcome of interest may matter -- if the uninsured rate is only measured yearly, we may be unaware of changes taking place in, say, the six months prior to the treatment date.
@@ -316,4 +316,4 @@ Traditional regression requires very large sample sizes and works better with ma
 - **Answer**:
 
 - What role does selection into treatment play in DiD/synthetic control versus regression discontinuity? When would we want to use either method?
-- **Answer**:
+- **Answer**: For all of these designs, treatment assignment need not be random. For the internal validity of the DiD/synthetic control methods to hold, we assume that, absent the treatment, the trends of the two units on the outcome variable would be the same. For the internal validity of the RD design, we assume that no unobserved factors have caused the observed change in the running variable at the threshold. For both sets of designs, then, we assume away unit-time specific shocks. But, since RD studies the effect of crossing a threshold, there is always the possibility that some actors try to "game the system" and manipulate their outcomes around this threshold -- in other words, deliberately selecting into or out of treatment. One would want to use DiD/synthetic control when estimating the effect of the imposition of a policy on an aggregate unit such as a state or country. RD is most useful in estimating the effect of a policy that is imposed on certain individual units (perhaps within aggregate units), depending on a particular criterion (eg. the policy takes effect for those units with a value of a variable above a certain threshold).
