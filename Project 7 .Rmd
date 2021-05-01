@@ -52,7 +52,12 @@ The dataset you will work with has been assembled from a few different sources a
 Create plots and provide 1-2 sentence analyses to answer the following questions:
 
 - Which states had the highest uninsured rates prior to 2014? The lowest?
+The states (and District) with the lowest uninsured rates prior to 2014 are Hawaii, Massachusetts, Vermont, and the District of Columbia. The states with the highest uninsured rates prior to 2014 changed somewhat during this period. Texas, Nevada, Florida, and Alaska had the highest uninsured rates 2010 - 2014, and up until 2010, Utah and New Mexico were also among this group.
+
+
 - Which states were home to most uninsured Americans prior to 2014? How about in 2021? **Note**: 2010 state population is provided as a variable to answer this question. In an actual study you would likely use population estimates over time, but to simplify you can assume these numbers stay about the same.
+
+The greatest number of uninsured Americans lived in California, Texas, Florida, New York, and Georgia before 2014. In 2020, the greatest number of uninsured Americans lived in Texas, California, Florida, Georgia, and North Carolina.
 
 ```{r}
 # highest and lowest uninsured rates
@@ -60,21 +65,27 @@ f <- medicaid_expansion %>%
   filter(year < 2014) %>%
   ggplot(mapping = aes(x = year, y = uninsured_rate, color = State)) 
 
-f + geom_line() + labs( x = "Year", y = "Uninsured Population Rate", title = "Uninsured Population Rate in Each State, 2008 - 2014")
+f + geom_line() +
+  labs( x = "Year", y = "Uninsured Population Rate", title = "Uninsured Population Rate in Each State, 2008 - 2014")
 
 # it might help to filter these - lowest
-f <- medicaid_expansion %>% filter(year < 2014, uninsured_rate < 0.08) %>%  ggplot(mapping = aes(x = year, y = uninsured_rate, color = State))
+f <- medicaid_expansion %>%
+  filter(year < 2014, uninsured_rate < 0.08) %>%
+  ggplot(mapping = aes(x = year, y = uninsured_rate, color = State))
 
-f + geom_line() + labs(x = "Year", y = "Uninsured Population Rate", title = "Uninsured Population Rate in Each State (Lower Bound), 2008 - 2014")
+f + geom_line() +
+  labs(x = "Year", y = "Uninsured Population Rate", title = "Uninsured Population Rate in Each State (Lower Bound), 2008 - 2014")
 
 # it might help to filter these - highest
-h <- medicaid_expansion %>% filter(year < 2014, uninsured_rate > 0.20) %>%  ggplot(mapping = aes(x = year, y = uninsured_rate, color = State)) 
+h <- medicaid_expansion %>%
+  filter(year < 2014, uninsured_rate > 0.20) %>%
+  ggplot(mapping = aes(x = year, y = uninsured_rate, color = State)) 
 
-h + geom_line() + labs( x = "Year", y = "Uninsured Population Rate", title = "Uninsured Population Rate in Each State (Upper Bound), 2008 - 2014")
+h + geom_line() +
+  labs( x = "Year", y = "Uninsured Population Rate", title = "Uninsured Population Rate in Each State (Upper Bound), 2008 - 2014")
 
 #rates seem to have jumped in a few places during these years, eg, Utah, New Mexico, Texas
 
-glimpse(medicaid_expansion)
 ```
 
 ```{r}
@@ -86,8 +97,8 @@ medicaid_expansion <- medicaid_expansion %>%
   mutate(num_unins = (uninsured_rate * population))
 
 p <- medicaid_expansion %>% filter(State != "District of Columbia", year < 2014) %>% ggplot(mapping = aes(x = reorder(State, num_unins), y = num_unins, fill = State, na.rm = TRUE))
-p + geom_boxplot() + coord_flip() + theme(legend.position = "none") + labs( x = "States", y = "Number of Uninsured People", title = "Uninsured Population in Each State, 2008 - 2014")
 
+p + geom_boxplot() + coord_flip() + theme(legend.position = "none") + labs( x = "States", y = "Number of Uninsured People", title = "Uninsured Population in Each State, 2008 - 2014")
 
 
 p2 <- medicaid_expansion %>% filter(State != "District of Columbia", year == 2020) %>% ggplot(mapping = aes(x = reorder(State, num_unins), y = num_unins, fill = State, na.rm = TRUE))
@@ -192,6 +203,9 @@ Do the following:
 # General Discussion Questions
 
 - Why are DiD and  synthetic control estimates well suited to studies of aggregated units like cities, states, countries, etc?
+
+Traditional regression requires very large sample sizes and works better with many units having received both the treatment and control conditions. By contrast, DiD and synthetic control estimates allow us to draw conclusions when we have only one case, or only a handful of cases that received treatment. This is great for large aggregated units where sample sizes are often <50 or <100. DiD allows us to account for shocks that all of the units may have been exposed to, a common thing with large aggregates like states. Synthetic controls allow us to construct a comparable control unit when one does not exist in reality, which one can imagine would come up a lot with large aggregated units, e.g. how would we find a suitable control for a unit as large as China without being able to construct one synthetically?
+
 - **Answer**:
 
 - What role does selection into treatment play in DiD/synthetic control versus regression discontinuity? When would we want to use either method?
