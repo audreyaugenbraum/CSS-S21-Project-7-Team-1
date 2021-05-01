@@ -275,7 +275,11 @@ data.frame(rsyn$weights) %>%
 - **Answer**: 
 
 - One of the benefits of synthetic control is that the weights are bounded between [0,1] and the weights must sum to 1. Augmentation might relax this assumption by allowing for negative weights. Does this create an interpretation problem, and how should we balance this consideration against the improvements augmentation offers in terms of imbalance in the pre-treatment period?
+
+It is useful when the number of treated units and control units are small and it does not relay on parallel pre-implementation trend like the diff and diff method. However, the credibility lies in achieving a good synthetic control. One disadvantage is that traditional statistical methods are not appropriate for this kind of approach.
+
 - **Answer**:
+Augmentation can be very helpful when the synthetic control has a poor pre-treatment fit. Per Ben-Michael, Feller, and Rothstein 2021, "SCM and ASCM will be similar if the estimated bias is small . . . If the estimated bias is large, the two estimators will diverge and the conditions appropriate for use of SCM will not apply" (p. 8-9) I think this means that although ASCM can create interpretability problems, it might be worth it if your data aren't overly biased and if your pretreatment fit leaves something to be desired. If your pretreatment fit is pretty good, though, it makes sense to skip whatever small benefit you might get from augmentation in favor of preserving interpretability.
 
 # Staggered Adoption Synthetic Control
 
